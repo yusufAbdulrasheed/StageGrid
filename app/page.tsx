@@ -7,7 +7,9 @@ const page = () => {
     <section>
       <h1 className="text-center">The Hub to Every Dev <br/> You Can't Miss</h1>
       <p className="text-center mt-5">Join us for a day of learning, building, and connecting with other developers.</p>
-      <ExploreBtn/>
+      <div>
+        <ExploreBtn/>
+      </div>
 
       <div className="mt-20 space-y-7">
         <h3>Featured Events</h3>
