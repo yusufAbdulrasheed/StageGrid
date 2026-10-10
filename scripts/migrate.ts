@@ -1,0 +1,15 @@
+// Run migrations against DATABASE_URL without starting the app (e.g. in a deploy step).
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+
+const url = process.env.DATABASE_URL;
+if (!url) {
+  console.error("DATABASE_URL is required");
+  process.exit(1);
+}
+
+const pool = new Pool({ connectionString: url });
+await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
+await pool.end();
+console.log("Migrations applied");
