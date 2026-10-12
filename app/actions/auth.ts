@@ -59,7 +59,6 @@ export async function forgotPasswordAction(_prev: FormState, fd: FormData): Prom
   const limit = rateLimit(`forgot:${await clientIp()}`, 5, 15 * 60_000);
   if (!limit.ok) return { error: "Too many requests. Try again in a few minutes.", values };
 
-  // Same response whether or not the account exists, so emails can't be enumerated.
   const user = await getUserByEmail(parsed.data.email);
   if (user) {
     const token = await createResetToken(user.id);

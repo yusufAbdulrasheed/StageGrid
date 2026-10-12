@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import EventCard, { priceLabel } from "@/components/EventCard";
+import EventCard from "@/components/EventCard";
+import HeroMosaic from "@/components/HeroMosaic";
 import EventImage from "@/components/EventImage";
 import PricingTable from "@/components/PricingTable";
 import Faq from "@/components/Faq";
@@ -8,7 +9,6 @@ import { categoryCounts, getStats, listEvents } from "@/lib/events";
 import { getCurrentUser } from "@/lib/auth";
 import { listUserOrgs } from "@/lib/orgs";
 import { CATEGORIES, categoryImage } from "@/lib/constants";
-import { dateParts } from "@/lib/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,7 @@ const features = [
   {
     n: "02",
     title: "Paid straight to you",
-    body: "Add your bank account once. Every ticket sale settles to it through Paystack, and the platform fee is shown up front. No spreadsheets, no chasing transfers.",
+    body: "Add your bank account once. Every ticket sale settles to it through Flutterwave, and the platform fee is shown up front. No spreadsheets, no chasing transfers.",
   },
   {
     n: "03",
@@ -37,59 +37,54 @@ const features = [
 
 export default async function HomePage() {
   const user = await getCurrentUser();
-  // Attendees don't need a marketing page: send them straight to the events.
   if (user && (await listUserOrgs(user.id)).length === 0) redirect("/events");
 
-  const [{ items }, stats, cats] = await Promise.all([listEvents({ pageSize: 6 }), getStats(), categoryCounts()]);
-  const lead = items[0];
+  const [{ items }, stats, cats] = await Promise.all([listEvents({ pageSize: 8 }), getStats(), categoryCounts()]);
   const counts = new Map(cats.map((c) => [c.category, c.count]));
-  const d = lead ? dateParts(lead.startsAt, lead.timezone) : null;
 
   return (
     <>
+      <style>{":root{--wrap-max:none;--wrap-pad:clamp(1rem,3.5vw,3.5rem)}"}</style>
       <section className="relative overflow-hidden border-b border-line">
         <div className="hairline-grid pointer-events-none absolute inset-0" aria-hidden />
-        <div className="wrap relative pt-16 sm:pt-24">
-          <p className="eyebrow animate-rise">Concerts · Parties · Festivals · Workshops · Meetups</p>
-          <h1 className="display animate-rise mt-6 max-w-4xl text-[clamp(3rem,8vw,6.5rem)] text-balance" style={{ animationDelay: "60ms" }}>
-            Find your next night out. Or <em className="text-accent">sell out</em> your own.
-          </h1>
-          <p className="animate-rise mt-7 max-w-xl text-lg text-muted text-pretty" style={{ animationDelay: "120ms" }}>
-            Book a seat at the events people are talking about, or publish your own, sell tickets in tiers and get paid
-            straight to your bank.
-          </p>
+        <div className="wrap relative grid items-center gap-14 pb-16 pt-14 sm:pt-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:pb-24">
+          <div>
+            <p className="eyebrow animate-rise flex items-center gap-3">
+              <span className="inline-block h-px w-8 bg-accent" aria-hidden />
+              Tickets for the nights worth having
+            </p>
+            <h1 className="display animate-rise mt-6 text-[clamp(2.9rem,5.6vw,5.9rem)] text-balance" style={{ animationDelay: "60ms" }}>
+              Find your next night out. Or <em className="text-accent">sell out</em> your own.
+            </h1>
+            <p className="animate-rise mt-7 max-w-lg text-lg text-muted text-pretty" style={{ animationDelay: "120ms" }}>
+              Concerts, pool parties, festivals and workshops, all in one place. Book a seat in a minute, or publish your
+              own and get paid straight to your bank.
+            </p>
 
-          <form action="/events" className="animate-rise mt-9 flex max-w-xl flex-col gap-3 sm:flex-row" style={{ animationDelay: "180ms" }}>
-            <input name="q" type="search" aria-label="Search events" placeholder="Search a city, artist or event" className="input h-12 flex-1 bg-bg" />
-            <button className="btn btn-primary h-12 px-6" type="submit">Find events</button>
-          </form>
-          <p className="animate-rise mt-4 text-sm text-muted" style={{ animationDelay: "220ms" }}>
-            Organizing something?{" "}
-            <Link href="/signup?type=organizer" className="text-ink underline underline-offset-4 hover:text-accent">Host an event free</Link>
-          </p>
+            <form action="/events" className="animate-rise mt-9 flex max-w-lg flex-col gap-3 sm:flex-row" style={{ animationDelay: "180ms" }}>
+              <input name="q" type="search" aria-label="Search events" placeholder="Search a city, artist or event" className="input h-12 w-full bg-bg sm:flex-1" />
+              <button className="btn btn-primary h-12 px-6" type="submit">Find events</button>
+            </form>
+            <p className="animate-rise mt-4 text-sm text-muted" style={{ animationDelay: "220ms" }}>
+              Organizing something?{" "}
+              <Link href="/signup?type=organizer" className="text-ink underline underline-offset-4 hover:text-accent">Host an event free</Link>
+            </p>
 
-          <figure className="animate-rise relative mt-14 overflow-hidden rounded-t-[10px] border border-b-0 border-line-strong" style={{ animationDelay: "280ms" }}>
-            <div className="relative aspect-[16/7] max-sm:aspect-[4/3]">
-              <EventImage src="/images/event1.png" alt="A crowd facing a lit stage at a live event" priority sizes="(min-width: 1180px) 1116px, 100vw" />
-              <div className="absolute inset-0 bg-gradient-to-t from-bg/80 via-transparent to-transparent" aria-hidden />
-            </div>
-            {lead && d && (
-              <Link
-                href={`/events/${lead.slug}`}
-                className="group absolute bottom-4 left-4 right-4 flex max-w-md items-center gap-4 rounded-md border border-line-strong bg-bg/90 p-3 pr-5 backdrop-blur sm:bottom-6 sm:left-6"
-              >
-                <span className="grid min-w-14 place-items-center rounded bg-surface-2 px-2 py-2 leading-none">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted">{d.month}</span>
-                  <span className="mt-1 text-xl font-semibold tabular-nums">{d.day}</span>
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="eyebrow block text-accent">Next up</span>
-                  <span className="block truncate font-medium group-hover:text-accent">{lead.title}</span>
-                  <span className="block truncate text-sm text-muted">{lead.location} · {priceLabel(lead)}</span>
-                </span>
-              </Link>
-            )}
-          </figure>
+            <dl className="animate-rise mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-line pt-6" style={{ animationDelay: "260ms" }}>
+              {[
+                [stats.upcoming, "events on now"],
+                [stats.locations, "places"],
+                [stats.bookings, "seats booked"],
+              ].map(([n, label]) => (
+                <div key={label as string}>
+                  <dd className="text-4xl font-semibold tabular-nums leading-none tracking-tight sm:text-5xl">{(n as number).toLocaleString("en-US")}</dd>
+                  <dt className="mt-2 font-mono text-[11px] uppercase tracking-[0.12em] text-faint">{label}</dt>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <HeroMosaic events={items.slice(0, 3)} />
         </div>
       </section>
 
@@ -127,9 +122,9 @@ export default async function HomePage() {
           </div>
           <Link href="/events" className="text-sm text-muted hover:text-ink">Explore everything →</Link>
         </div>
-        <ul className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {items.map((e, i) => (
-            <li key={e.id}><EventCard event={e} index={i} /></li>
+            <li key={e.id} className={i >= 6 ? "hidden 2xl:block" : undefined}><EventCard event={e} index={i} /></li>
           ))}
         </ul>
       </section>

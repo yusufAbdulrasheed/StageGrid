@@ -6,7 +6,6 @@ export const dynamic = "force-dynamic";
 const stamp = (iso: string) => iso.replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 
-/** RFC 5545 requires lines to be folded at 75 octets. */
 function fold(line: string): string {
   const out: string[] = [];
   let rest = line;

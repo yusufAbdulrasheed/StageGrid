@@ -146,7 +146,7 @@ describe("bookings", () => {
   it("scopes check-in and attendee lists to the organization", async () => {
     const e = (await getEventBySlug("capacity-test"))!;
     const [first] = await listAttendees(e.id);
-    await toggleCheckIn(first.id, otherOrg.id); // wrong tenant: no-op
+    await toggleCheckIn(first.id, otherOrg.id);
     expect((await listAttendees(e.id))[0].checkedInAt).toBeNull();
     await toggleCheckIn(first.id, org.id);
     expect((await listAttendees(e.id))[0].checkedInAt).not.toBeNull();
@@ -174,8 +174,8 @@ describe("billing", () => {
   });
 
   it("upgrades once per reference (idempotent) and extends the period", async () => {
-    expect((await applyPayment(payment(org.id, "ref_1"), "paystack")).applied).toBe(true);
-    expect((await applyPayment(payment(org.id, "ref_1"), "paystack")).applied).toBe(false);
+    expect((await applyPayment(payment(org.id, "ref_1"), "flutterwave")).applied).toBe(true);
+    expect((await applyPayment(payment(org.id, "ref_1"), "flutterwave")).applied).toBe(false);
     const ctx = (await getOrgContext(user.id, org.slug))!;
     expect(ctx.org.plan).toBe("pro");
     expect(effectivePlan(ctx.org)).toBe("pro");
@@ -201,7 +201,7 @@ describe("paid tickets", () => {
     { name: "VIP", price: 20000, quantity: null },
   ]);
 
-  it("stores tiers in kobo and exposes the price range", async () => {
+  it("stores tiers in minor units and exposes the price range", async () => {
     const e = await createEvent(input({ title: "Paid Night", capacity: "", tickets: tiers }), { orgId: org.id, userId: user.id });
     expect(e.tickets.map((t) => [t.name, t.price])).toEqual([["Regular", 500_000], ["VIP", 2_000_000]]);
     const listed = (await listEvents({ q: "Paid Night" })).items[0];
@@ -246,7 +246,7 @@ describe("paid tickets", () => {
     expect(o2.ok && o3.ok).toBe(true);
     const ref = (r: unknown) => decodeURIComponent((r as { url: string }).url.split("ref=")[1]);
 
-    expect((await fulfillOrder(ref(o2))).status).toBe("paid"); // takes the last Regular seat
+    expect((await fulfillOrder(ref(o2))).status).toBe("paid");
     const lost = await fulfillOrder(ref(o3));
     expect(lost.status).toBe("refunded");
 

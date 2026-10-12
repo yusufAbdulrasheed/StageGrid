@@ -2,22 +2,30 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { webhookEvents } from "@/lib/db/schema";
-import { applyPayment, findOrgByBilling, markOrgBilling, setSubscription, getBillingProvider } from "@/lib/billing";
-import { toVerified } from "@/lib/billing/paystack";
+import { applyPayment, findOrgByBilling, markOrgBilling, getBillingProvider } from "@/lib/billing";
 import { fulfillOrder } from "@/lib/orders";
 import { getOrgById, listOrgNotifyEmails } from "@/lib/orgs";
 import { notify } from "@/lib/notify";
 import { PLANS, formatNaira } from "@/lib/plans";
 
-interface PaystackEvent {
-  event: string;
-  data: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+interface FlutterwaveData {
+  id?: number | string;
+  tx_ref?: string;
+  status?: string;
+  payment_plan?: number | string | null;
+  customer?: { email?: string; customer_email?: string };
 }
 
-/** Returns false if this delivery was already processed. Safe to call repeatedly. */
-export async function handlePaystackEvent(evt: PaystackEvent): Promise<boolean> {
+interface FlutterwaveEvent {
+  event: string;
+  data: FlutterwaveData;
+}
+
+const emailOf = (d: FlutterwaveData) => (d.customer?.email ?? d.customer?.customer_email)?.toLowerCase() ?? null;
+
+export async function handleFlutterwaveEvent(evt: FlutterwaveEvent): Promise<boolean> {
   const d = evt.data ?? {};
-  const key = `paystack:${evt.event}:${d.id ?? d.reference ?? d.subscription_code ?? d.invoice_code ?? JSON.stringify(d).length}`;
+  const key = `flutterwave:${evt.event}:${d.id ?? d.tx_ref ?? JSON.stringify(d).length}`;
   const db = await getDb();
   const [fresh] = await db.insert(webhookEvents).values({ key }).onConflictDoNothing().returning({ key: webhookEvents.key });
   if (!fresh) return false;
@@ -25,33 +33,44 @@ export async function handlePaystackEvent(evt: PaystackEvent): Promise<boolean> 
   try {
     await dispatch(evt, d);
   } catch (err) {
-    // Release the idempotency key so Paystack's retry is processed rather than skipped.
     await db.delete(webhookEvents).where(eq(webhookEvents.key, key));
     throw err;
   }
   return true;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function dispatch(evt: PaystackEvent, d: Record<string, any>) {
+async function dispatch(evt: FlutterwaveEvent, d: FlutterwaveData) {
   switch (evt.event) {
-    case "charge.success": {
-      if (d.metadata?.kind === "ticket") {
-        const result = await fulfillOrder(String(d.reference));
-        // Not settled yet (another worker holds the claim, or a transient error): let Paystack redeliver.
-        if (result.status === "failed") throw new Error(`ticket fulfilment failed for ${d.reference}`);
+    case "charge.completed": {
+      const reference = String(d.tx_ref ?? "");
+      const email = emailOf(d);
+
+      if (d.status !== "successful") {
+        if (d.payment_plan && email) {
+          const org = await findOrgByBilling({ customerCode: email });
+          if (org) {
+            await markOrgBilling(org.id, { planStatus: "past_due" });
+            notify.paymentFailed(await listOrgNotifyEmails(org.id), org.name, `/app/${org.slug}/billing`);
+          }
+        }
         break;
       }
-      const org = d.metadata?.orgId ? null : await findOrgByBilling({ customerCode: d.customer?.customer_code });
-      const verified = toVerified(
-        d as Parameters<typeof toVerified>[0],
-        org ? { orgId: org.id, plan: org.plan, interval: org.planInterval } : undefined,
-      );
+
+      if (reference.startsWith("tkt_")) {
+        const result = await fulfillOrder(reference);
+        if (result.status === "failed") throw new Error(`ticket fulfilment failed for ${reference}`);
+        break;
+      }
+
+      const provider = getBillingProvider();
+      if (!provider || !reference) break;
+      const known = email ? await findOrgByBilling({ customerCode: email }) : null;
+      const verified = await provider.verify(reference, known ? { orgId: known.id, plan: known.plan, interval: known.planInterval } : undefined);
       if (!verified) break;
-      const result = await applyPayment(verified, "paystack");
+
+      const result = await applyPayment(verified, provider.id);
       if (result.applied) {
-        const paidOrg = await findOrgByBilling({ customerCode: verified.customerCode });
-        const target = paidOrg ?? (await getOrgById(verified.orgId));
+        const target = await getOrgById(verified.orgId);
         if (target) {
           notify.subscriptionReceipt(await listOrgNotifyEmails(target.id), {
             org: target.name,
@@ -62,30 +81,13 @@ async function dispatch(evt: PaystackEvent, d: Record<string, any>) {
           });
         }
       }
-      if (result.previous) {
-        await getBillingProvider()?.cancelSubscription(result.previous.code, result.previous.token).catch(() => undefined);
-      }
+      if (result.previous) await provider.cancelSubscription(result.previous).catch(() => undefined);
       break;
     }
-    case "subscription.create": {
-      const org = await findOrgByBilling({ customerCode: d.customer?.customer_code });
-      if (org && d.subscription_code && d.email_token) {
-        await setSubscription(org.id, { code: d.subscription_code, token: d.email_token, customerCode: d.customer?.customer_code });
-      }
-      break;
-    }
-    case "subscription.not_renew":
-    case "subscription.disable": {
-      const org = await findOrgByBilling({ subscriptionCode: d.subscription_code ?? d.subscription?.subscription_code, customerCode: d.customer?.customer_code });
+    case "subscription.cancelled": {
+      const email = emailOf(d);
+      const org = email ? await findOrgByBilling({ customerCode: email }) : null;
       if (org) await markOrgBilling(org.id, { cancelAtPeriodEnd: true, planStatus: "canceled" });
-      break;
-    }
-    case "invoice.payment_failed": {
-      const org = await findOrgByBilling({ subscriptionCode: d.subscription?.subscription_code, customerCode: d.customer?.customer_code });
-      if (org) {
-        await markOrgBilling(org.id, { planStatus: "past_due" });
-        notify.paymentFailed(await listOrgNotifyEmails(org.id), org.name, `/app/${org.slug}/billing`);
-      }
       break;
     }
   }

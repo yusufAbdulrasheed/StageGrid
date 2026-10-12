@@ -1,6 +1,3 @@
-// Verifies your Resend setup end to end.
-//   npm run mail:test -- you@example.com
-// Reads RESEND_API_KEY and MAIL_FROM from the environment (Next's .env.local is loaded below).
 import fs from "node:fs";
 
 for (const file of [".env.local", ".env"]) {

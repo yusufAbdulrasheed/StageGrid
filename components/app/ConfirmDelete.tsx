@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 
-/** Button + modal confirmation wrapping a server action passed as `action`. */
 export default function ConfirmDelete({
   action,
   title,

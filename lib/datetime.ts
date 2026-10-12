@@ -1,5 +1,3 @@
-/** Event times are entered in the event's own timezone and stored as UTC. */
-
 function tzOffsetMs(ts: number, timeZone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,

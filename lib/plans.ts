@@ -3,14 +3,12 @@ export type Interval = "monthly" | "yearly";
 export type Role = "owner" | "admin" | "member";
 
 export interface PlanLimits {
-  /** Published, not-yet-finished events at once. null = unlimited. */
   activeEvents: number | null;
   attendeesPerEvent: number | null;
   members: number;
   csvExport: boolean;
   analytics: boolean;
   apiAccess: boolean;
-  /** Platform fee taken from each paid ticket, in percent. */
   ticketFeePercent: number;
 }
 
@@ -18,7 +16,6 @@ export interface Plan {
   id: PlanId;
   name: string;
   tagline: string;
-  /** NGN, whole naira. */
   price: Record<Interval, number>;
   limits: PlanLimits;
   highlights: string[];
@@ -63,7 +60,6 @@ export function formatNaira(n: number) {
   return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(n);
 }
 
-/** Format an amount in kobo (minor units). */
 export function formatMinor(minor: number) {
   return minor === 0 ? "Free" : formatNaira(minor / 100);
 }
@@ -71,8 +67,6 @@ export function formatMinor(minor: number) {
 export function monthlyEquivalent(plan: Plan, interval: Interval) {
   return interval === "yearly" ? Math.round(plan.price.yearly / 12) : plan.price.monthly;
 }
-
-/* ------------------------------- permissions ------------------------------- */
 
 const RANK: Record<Role, number> = { member: 1, admin: 2, owner: 3 };
 

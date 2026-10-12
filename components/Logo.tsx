@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-/** 3×3 grid mark with a single lit cell. */
 export function LogoMark({ size = 22 }: { size?: number }) {
   const cells = Array.from({ length: 9 });
   return (

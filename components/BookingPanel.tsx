@@ -26,7 +26,6 @@ interface Props {
   booked: number;
   ended: boolean;
   user: { name: string; email: string } | null;
-  /** Ticket the signed-in user already holds, if any. */
   held: { code: string; ticketName: string | null; paid: boolean } | null;
   notice?: string;
 }
@@ -130,7 +129,7 @@ export default function BookingPanel({ eventId, slug, tickets, capacity, booked,
             >
               {pending ? (paid ? "Opening checkout…" : "Reserving…") : !tier || !available(tier) ? "Sold out" : paid ? `Pay ${formatMinor(tier.price)}` : "Get my ticket"}
             </button>
-            {paid && <p className="text-center text-xs text-faint">Secure payment by Paystack. You&apos;ll get your ticket as soon as it clears.</p>}
+            {paid && <p className="text-center text-xs text-faint">Secure payment by Flutterwave. You&apos;ll get your ticket as soon as it clears.</p>}
           </form>
         )}
       </div>

@@ -14,7 +14,7 @@ export type EventFormValues = Record<string, string>;
 
 interface TierRow {
   name: string;
-  price: string; // whole naira
+  price: string;
   quantity: string;
 }
 
@@ -22,9 +22,7 @@ interface Props {
   orgSlug: string;
   eventId?: string;
   initial?: EventFormValues;
-  /** Tiers already on the event (naira). */
   initialTickets?: { name: string; price: number; quantity: number | null }[];
-  /** Hide "publish" copy for events that are already live. */
   isLive?: boolean;
   payoutsReady: boolean;
 }
@@ -51,7 +49,6 @@ export default function EventForm({ orgSlug, eventId, initial, initialTickets, i
           quantity: t.quantity == null ? "" : String(t.quantity),
         }));
       } catch {
-        /* fall through */
       }
     }
     if (initialTickets?.length) return initialTickets.map((t) => ({ name: t.name, price: String(t.price), quantity: t.quantity == null ? "" : String(t.quantity) }));

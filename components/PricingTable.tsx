@@ -9,7 +9,6 @@ import { PLANS, PLAN_ORDER, formatNaira, monthlyEquivalent, type Interval, type 
 import { cn } from "@/lib/utils";
 
 interface Props {
-  /** "marketing" links to signup; "billing" starts checkout for the given workspace. */
   mode: "marketing" | "billing";
   orgSlug?: string;
   currentPlan?: PlanId;

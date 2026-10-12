@@ -1,4 +1,3 @@
-/** Guard against spreadsheet formula injection from user-supplied names. */
 export function csvCell(v: string) {
   const safe = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
   return `"${safe.replace(/"/g, '""')}"`;

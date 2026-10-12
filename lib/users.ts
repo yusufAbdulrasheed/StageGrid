@@ -12,7 +12,6 @@ export interface User {
 
 const byEmail = (email: string) => sql`lower(${users.email}) = ${email.toLowerCase()}`;
 
-// Verified against on unknown emails so login timing doesn't reveal which accounts exist.
 const DUMMY_HASH = hashPassword("not-a-real-password");
 
 export async function createUser(input: { name: string; email: string; password: string }): Promise<User | null> {

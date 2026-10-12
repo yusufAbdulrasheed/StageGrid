@@ -20,7 +20,6 @@ export default function ShareButton({ title, slug }: { title: string; slug: stri
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
-      /* user dismissed the share sheet */
     }
   }
 

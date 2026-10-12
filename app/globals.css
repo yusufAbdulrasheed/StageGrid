@@ -1,10 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/*
-  StageGrid — warm ink + one signal colour.
-  Surfaces step up in lightness; hairlines do the structural work instead of shadows.
-*/
 :root {
   --bg: #0e0d0b;
   --surface: #151412;
@@ -91,9 +87,9 @@
 @layer components {
   .wrap {
     width: 100%;
-    max-width: 1180px;
+    max-width: var(--wrap-max, 1180px);
     margin-inline: auto;
-    padding-inline: clamp(1rem, 4vw, 2rem);
+    padding-inline: var(--wrap-pad, clamp(1rem, 4vw, 2rem));
   }
 
   .display {
@@ -121,7 +117,6 @@
     opacity: 0.55;
   }
 
-  /* Buttons */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -178,7 +173,6 @@
     font-size: 13px;
   }
 
-  /* Form controls */
   .field {
     display: flex;
     flex-direction: column;

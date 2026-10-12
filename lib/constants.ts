@@ -21,7 +21,6 @@ export const MODE_LABEL: Record<EventMode, string> = {
   hybrid: "Hybrid",
 };
 
-/** Extra photo covers bundled with the app. Organizers can also use the default for their category or paste a URL. */
 export const COVERS = [
   { src: "/images/event1.png", label: "Stage lights" },
   { src: "/images/event2.png", label: "Big screen" },
@@ -31,7 +30,6 @@ export const COVERS = [
   { src: "/images/event6.png", label: "Crowd" },
 ] as const;
 
-/** Legacy value from the CSS-poster era; still resolved so older events keep a cover. */
 export const POSTER_PREFIX = "poster:";
 
 const CATEGORY_IMAGE: Record<string, string> = {
@@ -47,18 +45,16 @@ const CATEGORY_IMAGE: Record<string, string> = {
   Community: "community",
 };
 
-/** Default cover photo for a kind of event (Unsplash, see public/images/categories/CREDITS.md). */
 export const categoryImage = (category: string) => `/images/categories/${CATEGORY_IMAGE[category] ?? "community"}.jpg`;
 
 export const PAGE_SIZE = 9;
 
 export interface TicketPreset {
   name: string;
-  price: number; // naira
+  price: number;
   note?: string;
 }
 
-/** Suggested ticket tiers by kind of event; organizers can edit freely. */
 export const TICKET_PRESETS: Record<Category, TicketPreset[]> = {
   Concert: [
     { name: "Regular", price: 10_000 },
@@ -96,7 +92,6 @@ export const TICKET_PRESETS: Record<Category, TicketPreset[]> = {
   Community: [{ name: "Free entry", price: 0 }],
 };
 
-/** PostHog event names — keep in sync with the existing snake_case convention. */
 export enum AnalyticsEvent {
   EXPLORE_CLICKED = "explore_events_button_clicked",
   EVENT_BOOKED = "event_booked",

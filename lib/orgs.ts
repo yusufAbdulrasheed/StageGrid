@@ -41,7 +41,6 @@ export function toOrg(r: OrgRow): OrgRecord {
 
 const GRACE_MS = 3 * 86_400_000;
 
-/** The plan whose limits actually apply right now (lapsed subscriptions fall back to Starter). */
 export function effectivePlan(org: Pick<OrgRecord, "plan" | "currentPeriodEnd" | "planStatus">): PlanId {
   if (org.plan === "free") return "free";
   if (org.planStatus === "canceled" && org.currentPeriodEnd && org.currentPeriodEnd.getTime() < Date.now()) return "free";
@@ -118,8 +117,6 @@ export async function updateOrg(
   const db = await getDb();
   await db.update(organizations).set(data).where(eq(organizations.id, orgId));
 }
-
-/* --------------------------------- members --------------------------------- */
 
 export interface Member {
   userId: string;
@@ -211,8 +208,6 @@ export async function acceptInvitation(token: string, userId: string): Promise<{
   return { orgSlug: inv.orgSlug };
 }
 
-/* ---------------------------------- usage ---------------------------------- */
-
 export async function activeEventCount(orgId: string): Promise<number> {
   const db = await getDb();
   const [{ n }] = await db
@@ -228,7 +223,6 @@ export async function activeEventCount(orgId: string): Promise<number> {
   return Number(n);
 }
 
-/** Owners and admins: who gets sale notifications and billing emails. */
 export async function listOrgNotifyEmails(orgId: string): Promise<string[]> {
   const db = await getDb();
   const rows = await db

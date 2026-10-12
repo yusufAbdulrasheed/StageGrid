@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { AnalyticsEvent } from "@/lib/constants";
 import { track } from "@/lib/analytics";
 
-/** One-shot banner driven by ?created=1 / ?updated=1. */
 export default function FlashNotice({ kind, slug }: { kind: "created" | "updated" | "saved"; slug: string }) {
   const [open, setOpen] = useState(true);
 
@@ -15,7 +14,6 @@ export default function FlashNotice({ kind, slug }: { kind: "created" | "updated
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, "1");
     } catch {
-      /* storage unavailable — fine, worst case we track twice */
     }
     track(AnalyticsEvent.EVENT_CREATED, { event_slug: slug });
   }, [kind, slug]);

@@ -6,18 +6,12 @@ export interface Email {
   subject: string;
   text: string;
   html?: string;
-  /** Resend de-duplicates retries sharing a key for 24h. */
   idempotencyKey?: string;
   tags?: Record<string, string>;
 }
 
 const FROM = () => process.env.MAIL_FROM ?? "StageGrid <no-reply@stagegrid.app>";
 
-/**
- * Sends via Resend when RESEND_API_KEY is set; otherwise logs to the server console
- * (development) so every flow stays testable. Never throws: a mail outage must not break
- * the action that triggered it. Retries once on rate limits and 5xx.
- */
 export async function sendMail(msg: Email): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -61,15 +55,12 @@ export async function sendMail(msg: Email): Promise<boolean> {
   return false;
 }
 
-/* --------------------------------- layout ---------------------------------- */
-
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 interface Layout {
   preheader: string;
   heading: string;
   paragraphs: string[];
-  /** Label/value pairs rendered as a ticket-style summary. */
   details?: [string, string][];
   cta?: { label: string; path: string };
   footnote?: string;
@@ -119,8 +110,6 @@ function email(to: string, subject: string, l: Layout, extra?: Pick<Email, "idem
   return { to, subject, html, text, ...extra };
 }
 
-/* -------------------------------- templates -------------------------------- */
-
 export interface TicketMail {
   to: string;
   name: string;
@@ -130,7 +119,6 @@ export interface TicketMail {
   where: string;
   code: string;
   ticketName?: string | null;
-  /** Formatted amount, e.g. "₦25,000". Omit for free tickets. */
   paid?: string;
   reference?: string;
 }

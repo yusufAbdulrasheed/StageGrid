@@ -4,9 +4,7 @@ export interface FormState {
   ok?: boolean;
   message?: string;
   error?: string;
-  /** Set when the error is a plan limit, so the UI can offer an upgrade link. */
   upgrade?: boolean;
-  /** Set when the organizer needs to add a payout account first. */
   payouts?: boolean;
   fieldErrors?: FieldErrors;
   values?: Record<string, string>;

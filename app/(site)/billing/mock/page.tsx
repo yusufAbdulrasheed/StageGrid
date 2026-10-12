@@ -6,7 +6,6 @@ import { PLANS, formatNaira } from "@/lib/plans";
 
 export const metadata = { title: "Test checkout", robots: { index: false } };
 
-/** Stand-in for Paystack's hosted checkout. Only exists when no PAYSTACK_SECRET_KEY is set outside production. */
 export default async function MockCheckout({ searchParams }: { searchParams: Promise<{ ref?: string; org?: string }> }) {
   const { ref, org: slug } = await searchParams;
   const provider = getBillingProvider();
@@ -26,7 +25,7 @@ export default async function MockCheckout({ searchParams }: { searchParams: Pro
         <div className="flex justify-between py-3"><dt className="text-muted">Amount</dt><dd className="tabular-nums">{formatNaira(order.amount / 100)}</dd></div>
       </dl>
       <p className="mt-5 text-xs text-faint">
-        Add <code className="font-mono">PAYSTACK_SECRET_KEY</code> to switch this screen for Paystack&apos;s real checkout.
+        Add <code className="font-mono">FLUTTERWAVE_SECRET_KEY</code> to switch this screen for Flutterwave&apos;s real checkout.
       </p>
       <form action={confirmMockPaymentAction.bind(null, org.slug, ref)} className="mt-8">
         <button type="submit" className="btn btn-primary btn-lg w-full">Simulate successful payment</button>

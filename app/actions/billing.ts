@@ -38,21 +38,19 @@ export async function startCheckoutAction(orgSlug: string, fd: FormData) {
 export async function cancelSubscriptionAction(orgSlug: string) {
   const { org } = await requireOrg(orgSlug, "billing");
   const provider = getBillingProvider();
-  if (org.subscriptionCode && org.subscriptionToken && provider) {
+  if (provider && provider.id === org.billingProvider) {
     try {
-      await provider.cancelSubscription(org.subscriptionCode, org.subscriptionToken);
+      await provider.cancelSubscription({ code: org.subscriptionCode, customer: org.billingCustomerCode, plan: org.plan, interval: org.planInterval });
     } catch (err) {
       console.error("[billing] cancel failed", err);
       redirect(`/app/${orgSlug}/billing?error=cancel`);
     }
   }
-  // Access continues until the paid period ends (see effectivePlan).
   await markOrgBilling(org.id, { cancelAtPeriodEnd: true, planStatus: "canceled" });
   revalidatePath(`/app/${orgSlug}`, "layout");
   redirect(`/app/${orgSlug}/billing?canceled=1`);
 }
 
-/** Dev-only: completes a mock checkout. */
 export async function confirmMockPaymentAction(orgSlug: string, reference: string) {
   const { org } = await requireOrg(orgSlug, "billing");
   const provider = getBillingProvider();

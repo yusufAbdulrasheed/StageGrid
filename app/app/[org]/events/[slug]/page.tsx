@@ -46,7 +46,7 @@ export default async function ManageEventPage({
       )}
       {sp.delete === "blocked" && (
         <p role="alert" className="mb-6 rounded-[var(--radius-card)] border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
-          This event has paid tickets, so it can&apos;t be deleted. Unpublish it to stop new sales; refunds are handled from your Paystack dashboard.
+          This event has paid tickets, so it can&apos;t be deleted. Unpublish it to stop new sales; refunds are handled from your Flutterwave dashboard.
         </p>
       )}
       {sp.limit && (

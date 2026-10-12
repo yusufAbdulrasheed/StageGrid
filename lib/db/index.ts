@@ -1,10 +1,10 @@
 import "server-only";
 import path from "node:path";
 import fs from "node:fs";
-import type { PgDatabase } from "drizzle-orm/pg-core";
+import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "@/lib/db/schema";
 
-export type Db = PgDatabase<any, typeof schema>; // eslint-disable-line @typescript-eslint/no-explicit-any
+export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
 export { schema };
 
 const g = globalThis as unknown as { __sgDb?: Promise<Db> };
@@ -23,7 +23,6 @@ async function connect(): Promise<Db> {
     if (autoMigrate) await (await import("drizzle-orm/node-postgres/migrator")).migrate(d, { migrationsFolder });
     db = d as unknown as Db;
   } else {
-    // Embedded Postgres (WASM) so the app runs with zero setup. Not for production.
     const { PGlite } = await import("@electric-sql/pglite");
     const { drizzle } = await import("drizzle-orm/pglite");
     const dir = process.env.PGLITE_DIR ?? path.join(process.cwd(), "data", "pglite");
@@ -43,7 +42,7 @@ async function connect(): Promise<Db> {
 
 export function getDb(): Promise<Db> {
   return (g.__sgDb ??= connect().catch((err) => {
-    g.__sgDb = undefined; // allow retry on next request
+    g.__sgDb = undefined;
     throw err;
   }));
 }

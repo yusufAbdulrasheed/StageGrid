@@ -12,7 +12,6 @@ const publicLinks = [
 export default async function SiteHeader() {
   const user = await getCurrentUser();
   const isOrganizer = user ? (await listUserOrgs(user.id)).length > 0 : false;
-  // Attendees get a lean nav: browse and their bookings. No dashboard.
   const links = user && !isOrganizer ? [{ href: "/events", label: "Events" }, { href: "/history", label: "My bookings" }] : publicLinks;
 
   return (

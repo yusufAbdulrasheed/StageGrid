@@ -14,7 +14,6 @@ import { formValues, type FormState } from "@/lib/action-types";
 import { rateLimit } from "@/lib/rate-limit";
 import { notify } from "@/lib/notify";
 
-/** Returns an error message if publishing one more live event would exceed the plan. */
 async function publishLimitError(org: OrgRecord, alreadyLive: boolean): Promise<string | null> {
   const max = limitsFor(org).activeEvents;
   if (max == null || alreadyLive) return null;
@@ -30,7 +29,6 @@ function capacityError(org: OrgRecord, capacity: number | null): string | null {
     : null;
 }
 
-/** Selling tickets needs somewhere to send the money. */
 function payoutError(org: OrgRecord, tickets: Pick<TicketInput, "price">[]): string | null {
   return tickets.some((t) => t.price > 0) && !payoutsReady(org)
     ? "Add your payout account before selling paid tickets. You can still save this as a draft."
@@ -122,7 +120,6 @@ export async function deleteEventAction(orgSlug: string, id: string): Promise<vo
   const ev = await getEventById(id);
   if (!ev || ev.orgId !== org.id) redirect(`/app/${org.slug}/events`);
 
-  // Deleting would orphan payments; sold events are unpublished (and refunded in Paystack) instead.
   if ((await paidOrderCount(id)) > 0) redirect(`/app/${org.slug}/events/${ev.slug}?delete=blocked`);
 
   const people = await attendeeEmails(id);

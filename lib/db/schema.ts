@@ -36,9 +36,9 @@ export const organizations = pgTable(
     website: text("website").notNull().default(""),
     logoUrl: text("logo_url").notNull().default(""),
 
-    plan: text("plan").notNull().default("free"), // free | pro | business
+    plan: text("plan").notNull().default("free"),
     planInterval: text("plan_interval").notNull().default("monthly"),
-    planStatus: text("plan_status").notNull().default("active"), // active | past_due | canceled
+    planStatus: text("plan_status").notNull().default("active"),
     currentPeriodEnd: ts("current_period_end"),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
     billingProvider: text("billing_provider"),
@@ -46,7 +46,6 @@ export const organizations = pgTable(
     subscriptionCode: text("subscription_code"),
     subscriptionToken: text("subscription_token"),
 
-    // Payouts for ticket sales (Paystack subaccount)
     payoutBankName: text("payout_bank_name"),
     payoutAccountLast4: text("payout_account_last4"),
     payoutAccountName: text("payout_account_name"),
@@ -62,7 +61,7 @@ export const memberships = pgTable(
   {
     orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
     userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-    role: text("role").notNull(), // owner | admin | member
+    role: text("role").notNull(),
     createdAt: createdAt(),
   },
   (t) => [primaryKey({ columns: [t.orgId, t.userId] }), index("memberships_user_idx").on(t.userId)],
@@ -93,7 +92,7 @@ export const events = pgTable(
     summary: text("summary").notNull(),
     description: text("description").notNull(),
     image: text("image").notNull(),
-    mode: text("mode").notNull(), // in-person | online | hybrid
+    mode: text("mode").notNull(),
     venue: text("venue").notNull().default(""),
     location: text("location").notNull(),
     timezone: text("timezone").notNull(),
@@ -103,7 +102,7 @@ export const events = pgTable(
     tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
     agenda: text("agenda").array().notNull().default(sql`'{}'::text[]`),
     capacity: integer("capacity"),
-    status: text("status").notNull().default("draft"), // draft | published
+    status: text("status").notNull().default("draft"),
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: ts("updated_at").notNull().defaultNow(),
@@ -121,8 +120,8 @@ export const ticketTypes = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     eventId: uuid("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    price: integer("price").notNull().default(0), // minor units (kobo); 0 = free
-    quantity: integer("quantity"), // null = unlimited
+    price: integer("price").notNull().default(0),
+    quantity: integer("quantity"),
     sortOrder: integer("sort_order").notNull().default(0),
   },
   (t) => [index("ticket_types_event_idx").on(t.eventId)],
@@ -139,7 +138,7 @@ export const bookings = pgTable(
     code: text("code").notNull(),
     ticketTypeId: uuid("ticket_type_id").references(() => ticketTypes.id, { onDelete: "set null" }),
     orderId: uuid("order_id"),
-    amountPaid: integer("amount_paid").notNull().default(0), // minor units
+    amountPaid: integer("amount_paid").notNull().default(0),
     checkedInAt: ts("checked_in_at"),
     reminderSentAt: ts("reminder_sent_at"),
     createdAt: createdAt(),
@@ -162,7 +161,7 @@ export const orders = pgTable(
     amount: integer("amount").notNull(),
     platformFee: integer("platform_fee").notNull().default(0),
     currency: text("currency").notNull().default("NGN"),
-    status: text("status").notNull().default("pending"), // pending | paid | refunded | failed
+    status: text("status").notNull().default("pending"),
     createdAt: createdAt(),
     paidAt: ts("paid_at"),
   },
@@ -176,11 +175,11 @@ export const payments = pgTable(
     orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
     provider: text("provider").notNull(),
     reference: text("reference").notNull().unique(),
-    amount: integer("amount").notNull(), // minor units (kobo)
+    amount: integer("amount").notNull(),
     currency: text("currency").notNull(),
     plan: text("plan").notNull(),
     interval: text("interval").notNull(),
-    status: text("status").notNull(), // success | failed
+    status: text("status").notNull(),
     paidAt: ts("paid_at").notNull().defaultNow(),
   },
   (t) => [index("payments_org_idx").on(t.orgId)],

@@ -7,8 +7,7 @@ import {
   acceptInvitation, createInvitation, createOrg, getInvitation, limitsFor, listMembers, memberSeatsUsed, removeMember,
   revokeInvitation, setMemberRole, updateOrg,
 } from "@/lib/orgs";
-import { createApiKey, revokeApiKey } from "@/lib/api-keys";
-import { apiKeySchema, flattenErrors, inviteSchema, orgSchema, orgSettingsSchema, payoutSchema } from "@/lib/validation";
+import { flattenErrors, inviteSchema, orgSchema, orgSettingsSchema, payoutSchema } from "@/lib/validation";
 import { getBillingProvider } from "@/lib/billing";
 import { getDb } from "@/lib/db";
 import { organizations } from "@/lib/db/schema";
@@ -77,14 +76,14 @@ export async function revokeInviteAction(slug: string, id: string) {
 export async function removeMemberAction(slug: string, userId: string) {
   const { user, org, role } = await requireOrg(slug, "team");
   const target = (await listMembers(org.id)).find((m) => m.userId === userId);
-  if (!target || target.role === "owner") return; // owners can't be removed
+  if (!target || target.role === "owner") return;
   if (target.userId !== user.id && !atLeast(role, target.role === "admin" ? "owner" : "admin")) return;
   await removeMember(org.id, userId);
   revalidatePath(`/app/${slug}/team`);
 }
 
 export async function changeRoleAction(slug: string, userId: string, fd: FormData) {
-  const { org } = await requireOrg(slug, "billing"); // owner-only
+  const { org } = await requireOrg(slug, "billing");
   const role = fd.get("role");
   if (role !== "admin" && role !== "member") return;
   const target = (await listMembers(org.id)).find((m) => m.userId === userId);
@@ -103,24 +102,8 @@ export async function acceptInviteAction(token: string) {
   redirect(res ? `/app/${res.orgSlug}` : "/invite/invalid");
 }
 
-export async function createApiKeyAction(slug: string, _prev: FormState & { key?: string }, fd: FormData): Promise<FormState & { key?: string }> {
-  const { user, org } = await requireOrg(slug, "api-keys");
-  const parsed = apiKeySchema.safeParse(Object.fromEntries(fd));
-  if (!parsed.success) return { fieldErrors: flattenErrors(parsed.error) };
-  if (!limitsFor(org).apiAccess) return { error: "API access is part of the Business plan.", upgrade: true };
-  const key = await createApiKey(org.id, parsed.data.name, user.id);
-  revalidatePath(`/app/${slug}/settings`);
-  return { ok: true, key };
-}
-
-export async function revokeApiKeyAction(slug: string, id: string) {
-  const { org } = await requireOrg(slug, "api-keys");
-  await revokeApiKey(org.id, id);
-  revalidatePath(`/app/${slug}/settings`);
-}
-
 export async function savePayoutsAction(slug: string, _prev: FormState, fd: FormData): Promise<FormState> {
-  const { org } = await requireOrg(slug, "billing"); // owner only: this is where the money goes
+  const { org } = await requireOrg(slug, "billing");
   const parsed = payoutSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return { fieldErrors: flattenErrors(parsed.error) };
 
@@ -128,7 +111,7 @@ export async function savePayoutsAction(slug: string, _prev: FormState, fd: Form
   if (!provider) return { error: "Payments aren't configured on this deployment." };
 
   try {
-    const sub = await provider.createSubaccount({ businessName: org.name, bankCode: parsed.data.bankCode, accountNumber: parsed.data.accountNumber });
+    const sub = await provider.createSubaccount({ businessName: org.name, bankCode: parsed.data.bankCode, accountNumber: parsed.data.accountNumber, businessMobile: parsed.data.businessMobile });
     const db = await getDb();
     await db
       .update(organizations)

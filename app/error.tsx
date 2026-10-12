@@ -8,7 +8,6 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
     try {
       if (posthog.__loaded) posthog.captureException(error);
     } catch {
-      /* ignore */
     }
   }, [error]);
 

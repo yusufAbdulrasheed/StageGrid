@@ -4,10 +4,9 @@ import { siteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-/** Paystack sends the buyer back here. We verify with Paystack before issuing the ticket. */
 export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams;
-  const reference = sp.get("reference") ?? sp.get("trxref");
+  const reference = sp.get("tx_ref") ?? sp.get("reference");
   if (!reference) return NextResponse.redirect(siteUrl("/events"));
 
   const res = await fulfillOrder(reference);

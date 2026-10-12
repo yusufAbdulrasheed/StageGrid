@@ -11,7 +11,6 @@ import { notify, ticketMail } from "@/lib/notify";
 import { CURRENCY } from "@/lib/plans";
 import { siteUrl } from "@/lib/utils";
 
-/** Paid tickets settle to the organizer's Paystack subaccount; the simulated provider needs none. */
 export function payoutsReady(org: OrgRecord): boolean {
   const provider = getBillingProvider();
   return provider?.id === "mock" || !!org.subaccountCode;
@@ -34,7 +33,6 @@ const FAILURE_COPY: Record<BookFailure, string> = {
 };
 export const failureCopy = (r: BookFailure) => FAILURE_COPY[r];
 
-/** Create a pending order and hand back the provider's hosted checkout URL. */
 export async function startTicketCheckout(eventId: string, ticketTypeId: string, user: User): Promise<CheckoutResult> {
   const unavailable = await ticketAvailability(eventId, ticketTypeId);
   if (unavailable) return { ok: false, error: FAILURE_COPY[unavailable] };
@@ -79,10 +77,6 @@ export type FulfillResult =
   | { status: "refunded"; eventSlug: string; reason: string }
   | { status: "processing" | "failed" | "unknown"; eventSlug?: string };
 
-/**
- * Turn a settled payment into a ticket. Safe to call from both the redirect callback and the
- * webhook: only one caller claims the order, everyone else sees its eventual state.
- */
 export async function fulfillOrder(reference: string): Promise<FulfillResult> {
   const db = await getDb();
   const [order] = await db.select().from(orders).where(eq(orders.reference, reference)).limit(1);
@@ -101,7 +95,6 @@ export async function fulfillOrder(reference: string): Promise<FulfillResult> {
     return { status: "failed", eventSlug };
   }
 
-  // Claim: pending -> processing, atomically.
   const [claimed] = await db
     .update(orders)
     .set({ status: "processing" })
@@ -139,7 +132,6 @@ export async function fulfillOrder(reference: string): Promise<FulfillResult> {
       return { status: "paid", eventSlug: event.slug };
     }
 
-    // Couldn't seat the buyer (sold out while they paid, or they already had a ticket): give the money back.
     await provider.refund(reference).catch((e) => console.error("[orders] refund failed", reference, e));
     await db.update(orders).set({ status: "refunded" }).where(eq(orders.id, order.id));
     const reason =
@@ -150,7 +142,7 @@ export async function fulfillOrder(reference: string): Promise<FulfillResult> {
     return { status: "refunded", eventSlug: event.slug, reason };
   } catch (err) {
     console.error("[orders] fulfil failed", reference, err);
-    await db.update(orders).set({ status: "pending" }).where(eq(orders.id, order.id)); // let the webhook retry
+    await db.update(orders).set({ status: "pending" }).where(eq(orders.id, order.id));
     return { status: "failed", eventSlug };
   }
 }

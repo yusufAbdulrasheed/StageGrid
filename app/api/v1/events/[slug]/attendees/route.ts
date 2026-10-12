@@ -14,7 +14,6 @@ export async function GET(req: Request, ctx: { params: Promise<{ slug: string }>
 
   const { slug } = await ctx.params;
   const event = await getEventBySlug(slug);
-  // Same response for "doesn't exist" and "belongs to someone else".
   if (!event || event.orgId !== auth.org.id) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
   const items = (await listAttendees(event.id)).map(({ name, email, code, checkedInAt, createdAt }) => ({ name, email, code, checkedInAt, createdAt }));

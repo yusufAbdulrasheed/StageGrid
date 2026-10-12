@@ -35,7 +35,6 @@ export default async function BillingPage({
   const plan = PLANS[effective];
   const limits = limitsFor(org);
   const provider = getBillingProvider();
-  const manageUrl = provider && org.subscriptionCode ? await provider.manageUrl(org.subscriptionCode) : null;
   const msg = MESSAGES[sp.upgraded ? "upgraded" : sp.canceled ? "canceled" : (sp.error ?? "")];
   const lapsed = org.plan !== "free" && effective === "free";
 
@@ -83,7 +82,6 @@ export default async function BillingPage({
           )}
           {effective !== "free" && (
             <div className="mt-5 flex flex-wrap gap-2">
-              {manageUrl && <a href={manageUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">Update payment method ↗</a>}
               {!org.cancelAtPeriodEnd && (
                 <ConfirmDelete action={cancelSubscriptionAction.bind(null, slug)} title={`${plan.name} subscription`} noun="subscription">Cancel plan</ConfirmDelete>
               )}
@@ -118,12 +116,12 @@ export default async function BillingPage({
         <h2 id="plans" className="mb-6 text-[15px] font-medium">Change plan</h2>
         {!provider && (
           <p className="mb-6 rounded-[var(--radius-card)] border border-line-strong px-4 py-3 text-sm text-muted">
-            Online payments aren&apos;t configured. Set <code className="font-mono text-xs">PAYSTACK_SECRET_KEY</code> to enable checkout.
+            Online payments aren&apos;t configured. Set <code className="font-mono text-xs">FLUTTERWAVE_SECRET_KEY</code> to enable checkout.
           </p>
         )}
         {provider?.id === "mock" && (
           <p className="mb-6 rounded-[var(--radius-card)] border border-accent/30 bg-accent/10 px-4 py-3 text-sm">
-            Test mode: no Paystack key found, so upgrades use a simulated checkout.
+            Test mode: no Flutterwave key found, so upgrades use a simulated checkout.
           </p>
         )}
         <PricingTable mode="billing" orgSlug={slug} currentPlan={org.plan === "free" ? "free" : effective === "free" ? undefined : org.plan} currentInterval={org.planInterval} canManage={!!provider} />

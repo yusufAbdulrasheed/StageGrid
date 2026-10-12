@@ -14,7 +14,6 @@ import { ticketCode } from "@/lib/tokens";
 export interface TicketRecord {
   id: string;
   name: string;
-  /** Minor units (kobo). 0 = free. */
   price: number;
   quantity: number | null;
   sold: number;
@@ -39,16 +38,13 @@ export interface EventRecord {
   category: string;
   tags: string[];
   agenda: string[];
-  /** Display name of the hosting organization. */
   organizer: string;
   capacity: number | null;
   status: "draft" | "published";
   createdAt: string;
   booked: number;
-  /** Cheapest / dearest ticket in minor units. */
   minPrice: number;
   maxPrice: number;
-  /** Only populated by getEventBySlug / getEventById. */
   tickets: TicketRecord[];
 }
 
@@ -58,7 +54,6 @@ const bookedExpr = sql<number>`(select count(*)::int from ${bookings} where ${bo
 const minPriceExpr = sql<number>`coalesce((select min(${ticketTypes.price}) from ${ticketTypes} where ${ticketTypes.eventId} = "events"."id"), 0)::int`;
 const maxPriceExpr = sql<number>`coalesce((select max(${ticketTypes.price}) from ${ticketTypes} where ${ticketTypes.eventId} = "events"."id"), 0)::int`;
 
-// Qualified explicitly above: Drizzle drops table prefixes in single-table selects, which would make these self-referential.
 const cols = {
   ...getTableColumns(events),
   booked: bookedExpr.as("booked"),
@@ -128,7 +123,6 @@ export function hasEnded(e: Pick<EventRecord, "startsAt" | "endsAt">, now = Date
   return new Date(e.endsAt ?? e.startsAt).getTime() < now;
 }
 
-/** Shape returned from the public API. */
 export function publicEvent(e: EventRecord) {
   const { orgId, ...rest } = e;
   void orgId;
@@ -136,8 +130,6 @@ export function publicEvent(e: EventRecord) {
 }
 
 const escapeLike = (q: string) => `%${q.trim().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-
-/* ---------------------------------- queries --------------------------------- */
 
 export interface ListParams {
   q?: string;
@@ -147,9 +139,7 @@ export interface ListParams {
   when?: "upcoming" | "past" | "all";
   page?: number;
   pageSize?: number;
-  /** Restrict to one organization. */
   orgId?: string;
-  /** Include drafts (organizer views only). */
   includeDrafts?: boolean;
   status?: "draft" | "published";
 }
@@ -262,8 +252,6 @@ export async function categoryCounts(): Promise<{ category: string; count: numbe
   return rows.map((r) => ({ category: r.category, count: Number(r.n) }));
 }
 
-/* ---------------------------------- writes ---------------------------------- */
-
 const RESERVED_SLUGS = new Set(["new", "edit"]);
 
 async function uniqueSlug(title: string, ignoreId?: string): Promise<string> {
@@ -317,10 +305,6 @@ export async function createEvent(input: EventInput, ctx: { orgId: string; userI
   return (await getEventById(id))!;
 }
 
-/**
- * Tiers that already have sales can't be removed or repriced (that would change what
- * buyers agreed to), and quantity can't drop below what's sold.
- */
 export async function validateTicketEdit(eventId: string, next: TicketInput[]): Promise<string | null> {
   const db = await getDb();
   const current = await loadTickets(db, eventId);
@@ -413,8 +397,6 @@ export async function deleteEvent(id: string) {
   await db.delete(events).where(eq(events.id, id));
 }
 
-/* --------------------------------- bookings --------------------------------- */
-
 export interface BookingRecord {
   id: string;
   eventId: string;
@@ -446,15 +428,10 @@ export type BookResult = { ok: true; booking: BookingRecord } | { ok: false; rea
 
 export interface BookOptions {
   ticketTypeId?: string;
-  /** Set when a paid order was settled; free bookings must not pass this. */
   orderId?: string;
   amountPaid?: number;
 }
 
-/**
- * Reserve one seat inside a transaction. The event row is locked so concurrent buyers
- * can't oversell the event or a ticket tier.
- */
 export async function bookEvent(
   eventId: string,
   attendee: { name: string; email: string; userId: string | null },
@@ -530,7 +507,6 @@ export async function bookEvent(
   });
 }
 
-/** Cheap pre-flight for checkout so people aren't sent to pay for a ticket that's gone. */
 export async function ticketAvailability(eventId: string, ticketTypeId: string): Promise<BookFailure | null> {
   const ev = await getEventById(eventId);
   if (!ev || ev.status !== "published") return "not_found";
@@ -545,7 +521,6 @@ export async function ticketAvailability(eventId: string, ticketTypeId: string):
 const sameAttendee = (userId: string, email: string) =>
   or(eq(bookings.userId, userId), sql`lower(${bookings.email}) = ${email.toLowerCase()}`);
 
-/** Only free bookings can be cancelled here; paid ones go through the organizer (refunds). */
 export async function cancelBooking(eventId: string, userId: string, email: string) {
   const db = await getDb();
   await db.delete(bookings).where(and(eq(bookings.eventId, eventId), eq(bookings.amountPaid, 0), sameAttendee(userId, email)));
@@ -621,7 +596,6 @@ async function ownedBooking(bookingId: string, orgId: string) {
   return row ?? null;
 }
 
-/** Scoped to the org so ids from other tenants can't be touched. */
 export async function toggleCheckIn(bookingId: string, orgId: string) {
   const row = await ownedBooking(bookingId, orgId);
   if (!row) return;
@@ -629,7 +603,6 @@ export async function toggleCheckIn(bookingId: string, orgId: string) {
   await db.update(bookings).set({ checkedInAt: row.at ? null : new Date() }).where(eq(bookings.id, row.id));
 }
 
-/** Removes a free registration. Paid tickets are refunded through Paystack, not deleted. */
 export async function removeBooking(bookingId: string, orgId: string): Promise<boolean> {
   const row = await ownedBooking(bookingId, orgId);
   if (!row || row.paid > 0) return false;
@@ -645,7 +618,6 @@ export interface HistoryItem extends EventRecord {
   bookedAt: string;
 }
 
-/** An attendee's bookings, newest first, optionally limited to the last `sinceDays` days. */
 export async function listBookingHistory(userId: string, email: string, sinceDays?: number): Promise<HistoryItem[]> {
   const db = await getDb();
   const since = sinceDays ? new Date(Date.now() - sinceDays * 86_400_000) : null;
@@ -671,8 +643,6 @@ export async function listBookingHistory(userId: string, email: string, sinceDay
     bookedAt: r.bookedAt.toISOString(),
   }));
 }
-
-/* -------------------------------- reminders -------------------------------- */
 
 export async function dueReminders(windowHours = 24) {
   const db = await getDb();
@@ -708,7 +678,6 @@ export async function markReminded(ids: string[]) {
   await db.update(bookings).set({ reminderSentAt: new Date() }).where(inArray(bookings.id, ids));
 }
 
-/** Everyone holding a ticket, for event-wide notices (e.g. cancellation). */
 export async function attendeeEmails(eventId: string) {
   const db = await getDb();
   const rows = await db.select({ name: bookings.name, email: bookings.email, paid: bookings.amountPaid }).from(bookings).where(eq(bookings.eventId, eventId));
@@ -720,8 +689,6 @@ export async function paidOrderCount(eventId: string): Promise<number> {
   const [r] = await db.select({ n: count() }).from(bookings).where(and(eq(bookings.eventId, eventId), isNotNull(bookings.orderId)));
   return Number(r.n);
 }
-
-/* -------------------------------- org analytics ------------------------------- */
 
 export async function registrationsByDay(orgId: string, days = 30): Promise<{ day: string; n: number }[]> {
   const db = await getDb();

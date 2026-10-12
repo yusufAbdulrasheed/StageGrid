@@ -13,11 +13,6 @@ function authorised(header: string | null): boolean | "unconfigured" {
   return given.length === want.length && timingSafeEqual(given, want);
 }
 
-/**
- * Sends "starts within 24h" reminders. Call hourly from any scheduler
- * (Vercel Cron, GitHub Actions, cron-job.org) with `Authorization: Bearer $CRON_SECRET`.
- * Each ticket is reminded once.
- */
 export async function GET(req: Request) {
   const ok = authorised(req.headers.get("authorization"));
   if (ok === "unconfigured") return NextResponse.json({ error: "CRON_SECRET is not set" }, { status: 503 });

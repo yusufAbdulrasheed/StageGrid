@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-// PostHog is proxied through /ingest, so connect-src can stay 'self'.
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
@@ -20,11 +19,8 @@ const csp = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
-  // PGlite ships WASM/data files that must not be bundled.
   serverExternalPackages: ["@electric-sql/pglite"],
-  // Migrations run at boot, so the SQL files must be present in the deployed output.
   outputFileTracingIncludes: { "/**": ["./drizzle/**/*"] },
-  // Required so PostHog's trailing-slash API requests aren't redirected.
   skipTrailingSlashRedirect: true,
 
   async headers() {
@@ -45,7 +41,6 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
-      // Routes from the first version of the app.
       { source: "/event", destination: "/events", permanent: true },
       { source: "/event/:slug", destination: "/events/:slug", permanent: true },
       { source: "/create-event", destination: "/events/new", permanent: true },

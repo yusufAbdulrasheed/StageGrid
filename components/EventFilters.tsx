@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CATEGORIES, MODES, MODE_LABEL, AnalyticsEvent } from "@/lib/constants";
 import { track } from "@/lib/analytics";
@@ -19,17 +19,19 @@ export default function EventFilters() {
   const when = params.get("when") ?? "upcoming";
   const price = params.get("price") ?? "";
 
-  function push(next: Record<string, string>) {
-    const sp = new URLSearchParams(params.toString());
-    for (const [k, v] of Object.entries(next)) {
-      if (v) sp.set(k, v);
-      else sp.delete(k);
-    }
-    sp.delete("page");
-    startTransition(() => router.replace(`${pathname}${sp.size ? `?${sp}` : ""}`, { scroll: false }));
-  }
+  const push = useCallback(
+    (next: Record<string, string>) => {
+      const sp = new URLSearchParams(params.toString());
+      for (const [k, v] of Object.entries(next)) {
+        if (v) sp.set(k, v);
+        else sp.delete(k);
+      }
+      sp.delete("page");
+      startTransition(() => router.replace(`${pathname}${sp.size ? `?${sp}` : ""}`, { scroll: false }));
+    },
+    [params, pathname, router],
+  );
 
-  // Debounced search-as-you-type.
   useEffect(() => {
     if (q === lastPushed.current) return;
     const t = setTimeout(() => {
@@ -38,8 +40,7 @@ export default function EventFilters() {
       push({ q: q.trim() });
     }, 280);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q]);
+  }, [q, push]);
 
   const pill = (active: boolean) =>
     cn(

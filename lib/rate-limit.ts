@@ -1,10 +1,6 @@
 import "server-only";
 import { headers } from "next/headers";
 
-/**
- * Fixed-window in-memory limiter. Good enough for a single instance; swap the
- * Map for Redis/Upstash if you scale horizontally.
- */
 const hits = new Map<string, { count: number; resetAt: number }>();
 
 export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfter: number } {

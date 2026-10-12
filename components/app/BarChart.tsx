@@ -1,4 +1,3 @@
-/** Server-rendered SVG-free bar chart; accessible via a text summary. */
 export default function BarChart({ data }: { data: { day: string; n: number }[] }) {
   const max = Math.max(1, ...data.map((d) => d.n));
   const total = data.reduce((s, d) => s + d.n, 0);

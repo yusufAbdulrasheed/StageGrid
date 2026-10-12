@@ -42,7 +42,6 @@ export async function destroySession() {
   (await cookies()).delete(COOKIE);
 }
 
-/** Resolve the signed-in user for this request (memoised per render). */
 export const getCurrentUser = cache(async (): Promise<User | null> => {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
@@ -66,10 +65,6 @@ export interface OrgSession {
   role: Role;
 }
 
-/**
- * Gate a tenant route: must be signed in and a member of `orgSlug`.
- * Non-members get a 404 (don't reveal that the workspace exists).
- */
 export const requireOrg = cache(async (orgSlug: string, action?: Action): Promise<OrgSession> => {
   const user = await requireUser(`/app/${orgSlug}`);
   const ctx = await getOrgContext(user.id, orgSlug);
@@ -78,10 +73,8 @@ export const requireOrg = cache(async (orgSlug: string, action?: Action): Promis
   return { user, ...ctx };
 });
 
-/** Where a signed-in organizer should land. */
 export async function homeFor(user: User): Promise<string> {
   const orgs = await listUserOrgs(user.id);
-  // Organizers land in their workspace; everyone else (attendees) lands on the events page.
   return orgs.length ? `/app/${orgs[0].org.slug}` : "/events";
 }
 

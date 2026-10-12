@@ -5,7 +5,6 @@ import { formatDay, formatTime } from "@/lib/datetime";
 import { formatMinor } from "@/lib/plans";
 import type { EventRecord } from "@/lib/events";
 
-/** Run after the response is sent (Next.js `after`); fall back to fire-and-forget outside a request (tests, scripts). */
 function queue(...emails: Email[]) {
   const run = async () => {
     await Promise.allSettled(emails.map(sendMail));

@@ -25,7 +25,6 @@ export async function bookEventAction(eventId: string, _prev: FormState, fd: For
   const tier = event?.tickets.find((t) => t.id === ticketTypeId);
   if (!event || event.status !== "published" || !tier) return { error: "This ticket is no longer available." };
 
-  // Paid: hand off to hosted checkout. The seat is only issued once payment is verified.
   if (tier.price > 0) {
     const res = await startTicketCheckout(eventId, ticketTypeId, user);
     if (!res.ok) return { error: res.error };
@@ -58,7 +57,6 @@ export async function cancelBookingAction(eventId: string) {
   revalidatePath("/history");
 }
 
-/** Dev-only: completes the simulated ticket checkout. */
 export async function confirmMockTicketAction(reference: string) {
   const provider = getBillingProvider();
   if (provider?.id !== "mock") redirect("/events");
@@ -67,8 +65,6 @@ export async function confirmMockTicketAction(reference: string) {
   const res = await fulfillOrder(reference);
   redirect(res.status === "paid" ? `/history?booked=${res.eventSlug}` : res.eventSlug ? `/events/${res.eventSlug}?payment=${res.status}` : "/events");
 }
-
-/* ---- organizer-side attendee tools ---- */
 
 export async function checkInAction(orgSlug: string, bookingId: string) {
   const { org } = await requireOrg(orgSlug, "events");

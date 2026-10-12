@@ -5,7 +5,7 @@ const items = [
   },
   {
     q: "How do I pay for a ticket?",
-    a: "Paid events use Paystack checkout (card, bank transfer or USSD). Your ticket is issued the moment the payment clears, and a receipt is emailed to you. Free events are one tap.",
+    a: "Paid events use Flutterwave checkout (card, bank transfer or USSD). Your ticket is issued the moment the payment clears, and a receipt is emailed to you. Free events are one tap.",
   },
   {
     q: "What if a ticket sells out while I'm paying?",
@@ -17,7 +17,7 @@ const items = [
   },
   {
     q: "How do I get paid?",
-    a: "Add your bank account in your workspace settings. Ticket revenue is split at the moment of payment, with your share settled to your account by Paystack on its normal schedule.",
+    a: "Add your bank account in your workspace settings. Ticket revenue is split at the moment of payment, with your share settled to your bank account by Flutterwave on its normal schedule.",
   },
   {
     q: "Can my team help run the event?",

@@ -45,7 +45,6 @@ export default async function EventPage({ params, searchParams }: Props) {
 
   const user = await getCurrentUser();
   const membership = user ? await getOrgContext(user.id, event.orgSlug) : null;
-  // Drafts are only visible to the organization's own team.
   if (event.status === "draft" && !membership) notFound();
 
   const ended = hasEnded(event);

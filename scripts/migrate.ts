@@ -1,4 +1,3 @@
-// Run migrations against DATABASE_URL without starting the app (e.g. in a deploy step).
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";

@@ -4,7 +4,6 @@ import { CATEGORIES, MODES } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
-/** Public discovery feed. Authenticated, org-scoped access lives under /api/v1. */
 export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams;
   const category = sp.get("category") ?? undefined;

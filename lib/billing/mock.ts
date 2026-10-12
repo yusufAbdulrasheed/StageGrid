@@ -12,10 +12,6 @@ const BANKS = [
   { name: "Kuda Bank", code: "50211" },
 ];
 
-/**
- * Development-only checkout so the upgrade flow is testable without Paystack keys.
- * The reference encodes the order: mock.<orgId>.<plan>.<interval>.<nonce>
- */
 export class MockProvider implements BillingProvider {
   readonly id = "mock" as const;
 
@@ -46,15 +42,12 @@ export class MockProvider implements BillingProvider {
     return { ok: true, amountMinor: expected.amountMinor, currency: CURRENCY };
   }
   async refund() {}
-  async createSubaccount(i: { businessName: string; bankCode: string; accountNumber: string }) {
-    return { code: `ACCT_mock_${i.accountNumber.slice(-4)}`, accountName: i.businessName, bankName: BANKS.find((b) => b.code === i.bankCode)?.name ?? i.bankCode };
+  async createSubaccount(i: Parameters<BillingProvider["createSubaccount"]>[0]) {
+    return { code: `RS_mock_${i.accountNumber.slice(-4)}`, accountName: i.businessName, bankName: BANKS.find((b) => b.code === i.bankCode)?.name ?? i.bankCode };
   }
   async listBanks() {
     return BANKS;
   }
 
   async cancelSubscription() {}
-  async manageUrl() {
-    return null;
-  }
 }

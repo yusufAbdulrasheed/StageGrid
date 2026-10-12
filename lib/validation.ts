@@ -57,6 +57,7 @@ export const inviteSchema = z.object({
 export const payoutSchema = z.object({
   bankCode: z.string().trim().min(1, "Choose your bank"),
   accountNumber: z.string().trim().regex(/^\d{10}$/, "Account numbers are 10 digits"),
+  businessMobile: z.string().trim().regex(/^\+?\d{10,15}$/, "Enter a phone number, e.g. 08012345678"),
 });
 
 export const apiKeySchema = z.object({ name: trimmed(2, 40, "Key name") });
@@ -76,7 +77,6 @@ const imageField = z
 
 export interface TicketInput {
   name: string;
-  /** Whole naira; 0 = free. */
   price: number;
   quantity: number | null;
 }
@@ -89,7 +89,6 @@ const ticketItem = z.object({
     .transform((v) => (v === "" || v === null ? null : v)),
 });
 
-/** The form posts ticket tiers as a JSON string from a client-side editor. */
 const ticketsField = z
   .string()
   .default("")

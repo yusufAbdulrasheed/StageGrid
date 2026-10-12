@@ -14,10 +14,8 @@ export const ATTENDEE_EMAIL = "guest@stagegrid.dev";
 
 interface SeedTicket {
   name: string;
-  /** Naira. */
   price: number;
   quantity: number | null;
-  /** Share of the allocation that is sold (0–1); 1 = sold out. */
   fill: number;
 }
 
@@ -26,14 +24,12 @@ interface SeedEvent {
   title: string;
   summary: string;
   description: string;
-  /** A bundled photo path, or omitted to use the category photo. */
   image?: string;
   category: string;
   mode: "in-person" | "online" | "hybrid";
   venue: string;
   location: string;
   timezone: string;
-  /** Days from today; negative = already happened. */
   inDays: number;
   start: string;
   end?: string;
@@ -359,7 +355,6 @@ export async function seedIfEmpty(db: Db): Promise<boolean> {
     orgIds.set(name, org.id);
     await db.insert(memberships).values({ orgId: org.id, userId: isDemo ? demo.id : publisher.id, role: "owner" });
   }
-  // Demo user is a plain member of one workspace to exercise role-based access.
   await db.insert(memberships).values({ orgId: orgIds.get("Detty Fest Co.")!, userId: demo.id, role: "member" });
 
   let seed = 7;
@@ -421,9 +416,8 @@ export async function seedIfEmpty(db: Db): Promise<boolean> {
     }
   }
 
-  // Give the demo attendee some history across the 7-day / month / year windows.
   const picks = [
-    { title: "Highlife Sessions Vol. 3", age: 24 + 20 }, // past event, booked ~6 weeks ago
+    { title: "Highlife Sessions Vol. 3", age: 24 + 20 },
     { title: "Comedy Open Mic", age: 2 },
     { title: "Sunset Pool Party", age: 9 },
     { title: "Jollof & Jazz Brunch", age: 16 },

@@ -10,11 +10,10 @@ import { PLANS, formatNaira } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
-/** Paystack redirects the payer here after checkout; we verify server-side before upgrading. */
 export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams;
   const slug = sp.get("org") ?? "";
-  const reference = sp.get("reference") ?? sp.get("trxref");
+  const reference = sp.get("tx_ref") ?? sp.get("reference");
   const back = (q: string) => NextResponse.redirect(siteUrl(`/app/${slug}/billing?${q}`));
 
   const user = await getCurrentUser();
@@ -26,7 +25,6 @@ export async function GET(req: Request) {
   try {
     const provider = getBillingProvider();
     const verified = await provider?.verify(reference);
-    // The reference must resolve to a payment for this workspace.
     if (!provider || !verified || verified.orgId !== ctx.org.id) return back("error=verify");
     const result = await applyPayment(verified, provider.id);
     if (result.applied) {
@@ -38,7 +36,7 @@ export async function GET(req: Request) {
         billingPath: `/app/${ctx.org.slug}/billing`,
       });
     }
-    if (result.previous) await provider.cancelSubscription(result.previous.code, result.previous.token).catch(() => undefined);
+    if (result.previous) await provider.cancelSubscription(result.previous).catch(() => undefined);
     return back("upgraded=1");
   } catch (err) {
     console.error("[billing callback]", err);
